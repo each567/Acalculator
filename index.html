@@ -10,15 +10,17 @@
         /* Set Inter font */
         body {
             font-family: 'Inter', sans-serif;
+            /* Lighter pink gradient background */
+            background-image: linear-gradient(to bottom right, #ffe4e6, #fecaca); /* rose-100 to pink-200 */
+            /* Single, larger, and slightly more visible heart pattern */
+            background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12 4.419c-2.826-5.695-11.999-4.064-11.999 3.27 0 7.27 9.999 10.931 11.999 14.311 2-3.38 11.999-7.041 11.999-14.311 0-7.334-9.173-8.964-11.999-3.27z' fill='%23fbcfe8' fill-opacity='0.6'/%3E%3C/svg%3E"), linear-gradient(to bottom right, #ffe4e6, #fecaca);
+            background-repeat: no-repeat, no-repeat; /* No repeat for pattern and gradient */
+            background-position: center center, center center; /* Center pattern and gradient */
+            background-size: 200px 200px, 100% 100%; /* pattern size, gradient size */
         }
-        /* Hide number input arrows */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+        /* Removed CSS to hide number input arrows */
         input[type="number"] {
-            -moz-appearance: textfield;
+            -moz-appearance: textfield; /* Keep for Firefox compatibility if needed, but modern browsers usually handle it */
         }
 
         /* Adjustments for responsive table columns */
@@ -37,7 +39,7 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-400 to-purple-600 min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="bg-white p-8 rounded-xl shadow-2xl max-w-3xl w-full text-center">
         <h1 class="text-4xl font-extrabold text-gray-800 mb-6">
