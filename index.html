@@ -250,7 +250,7 @@
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
                     <td class="border border-gray-300 p-1 text-center font-medium">${item.code}</td>
-                    <td class="border border-gray-300 p-1 text-left whitespace-normal">${item.name}</td> <!-- Added whitespace-normal here -->
+                    <td class="border border-gray-300 p-1 text-left whitespace-normal">${item.name}</td>
                     <td class="border border-gray-300 p-1 text-right">${item.fullCost.toLocaleString()}</td>
                     <td class="border border-gray-300 p-1 text-center quantity-column">
                         <input type="number" data-code="${item.code}" class="quantity-input w-full h-10 p-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
@@ -310,12 +310,13 @@
             totalFullCostDisplay.textContent = `${totalFullCost.toLocaleString()} 元`;
             totalSelfPaymentDisplay.textContent = `${Math.floor(totalSelfPayment).toLocaleString()} 元`;
 
-            updateSubsidyComparison(currentSubsidy, totalSelfPayment);
+            // Corrected logic: Subsidy comparison is CMS Subsidy - Total Full Cost
+            updateSubsidyComparison(currentSubsidy, totalFullCost);
         }
 
         // Update subsidy comparison result
-        function updateSubsidyComparison(subsidy, selfPayment) {
-            const remaining = Math.floor(subsidy - selfPayment);
+        function updateSubsidyComparison(subsidy, fullCost) { // Renamed parameter for clarity
+            const remaining = Math.floor(subsidy - fullCost); // Corrected calculation
             if (subsidy === 0 && cmsLevelSelect.value !== '自費') { // If subsidy is 0 but not '自費' CMS level
                 subsidyComparisonResultDisplay.textContent = '請選擇 CMS 等級以比對補助。';
                 subsidyComparisonBox.classList.remove('bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700');
