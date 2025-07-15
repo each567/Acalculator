@@ -87,12 +87,12 @@
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr class="bg-gray-100">
-                        <th class="border border-gray-300 p-2 rounded-tl-lg">編號</th>
-                        <th class="border border-gray-300 p-2">照顧組合</th>
-                        <th class="border border-gray-300 p-2">全額 (元)</th>
-                        <th class="border border-gray-300 p-2 quantity-column">組數</th>
-                        <th class="border border-gray-300 p-2">項目總額 (元)</th>
-                        <th class="border border-gray-300 p-2 rounded-tr-lg">項目自付額 (元)</th>
+                        <th class="border border-gray-300 p-1 rounded-tl-lg">編號</th>
+                        <th class="border border-gray-300 p-1 whitespace-normal">照顧組合</th>
+                        <th class="border border-gray-300 p-1">全額 (元)</th>
+                        <th class="border border-gray-300 p-1 quantity-column">組數</th>
+                        <th class="border border-gray-300 p-1">項目總額 (元)</th>
+                        <th class="border border-gray-300 p-1 rounded-tr-lg">項目自付額 (元)</th>
                     </tr>
                 </thead>
                 <tbody id="serviceItemsTableBody">
@@ -124,9 +124,6 @@
         <div class="flex flex-wrap justify-center gap-4 mt-6">
             <button id="saveBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-green-300">
                 重新計算
-            </button>
-            <button id="resetQuantitiesBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gray-300">
-                歸零組數
             </button>
         </div>
 
@@ -175,7 +172,6 @@
         const totalSelfPaymentDisplay = document.getElementById('totalSelfPayment');
         const subsidyComparisonBox = document.getElementById('subsidyComparisonBox');
         const subsidyComparisonResultDisplay = document.getElementById('subsidyComparisonResult');
-        const resetQuantitiesBtn = document.getElementById('resetQuantitiesBtn');
         const saveBtn = document.getElementById('saveBtn'); // Now "重新計算" button
         const userIdDisplay = document.getElementById('userIdDisplay');
         const exportDataTextarea = document.getElementById('exportDataTextarea');
@@ -253,14 +249,14 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
-                    <td class="border border-gray-300 p-2 text-center font-medium">${item.code}</td>
-                    <td class="border border-gray-300 p-2 text-left">${item.name}</td>
-                    <td class="border border-gray-300 p-2 text-right">${item.fullCost.toLocaleString()}</td>
-                    <td class="border border-gray-300 p-2 text-center quantity-column">
+                    <td class="border border-gray-300 p-1 text-center font-medium">${item.code}</td>
+                    <td class="border border-gray-300 p-1 text-left whitespace-normal">${item.name}</td> <!-- Added whitespace-normal here -->
+                    <td class="border border-gray-300 p-1 text-right">${item.fullCost.toLocaleString()}</td>
+                    <td class="border border-gray-300 p-1 text-center quantity-column">
                         <input type="number" data-code="${item.code}" class="quantity-input w-full h-10 p-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
                     </td>
-                    <td class="border border-gray-300 p-2 text-right font-semibold" id="itemTotal-${item.code}">0</td>
-                    <td class="border border-gray-300 p-2 text-right font-semibold" id="itemSelfPayment-${item.code}">0</td>
+                    <td class="border border-gray-300 p-1 text-right font-semibold" id="itemTotal-${item.code}">0</td>
+                    <td class="border border-gray-300 p-1 text-right font-semibold" id="itemSelfPayment-${item.code}">0</td>
                 `;
                 serviceItemsTableBody.appendChild(row);
                 console.log(`Appended row for item: ${item.code}`);
@@ -411,9 +407,6 @@
             showMessage('數據已複製到剪貼簿！', 'success');
         }
 
-        // Removed saveCalculation function
-        // Removed loadCalculation function
-
         // Firebase Initialization and Data Operations
         async function initializeFirebaseAndLoadData() {
             try {
@@ -444,13 +437,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             cmsLevelSelect.addEventListener('change', calculateAllTotals);
             identityTypeSelect.addEventListener('change', calculateAllTotals);
-            resetQuantitiesBtn.addEventListener('click', resetQuantities);
             saveBtn.addEventListener('click', () => resetQuantities()); // "重新計算" button now calls resetQuantities()
             exportDataBtn.addEventListener('click', () => exportCurrentData());
             copyDataBtn.addEventListener('click', () => copyExportedData());
 
-            renderServiceItems();
-            initializeFirebaseAndLoadData();
+            try {
+                renderServiceItems(); // Call render function
+            } catch (e) {
+                console.error("Error rendering service items:", e);
+                showMessage('表格內容載入失敗：' + e.message, 'error');
+            }
+
+            initializeFirebaseAndLoadData(); // Initialize Firebase
         });
     </script>
 </body>
