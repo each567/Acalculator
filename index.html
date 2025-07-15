@@ -20,6 +20,21 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
+
+        /* Adjustments for responsive table columns */
+        /* Remove fixed width from table header cells to allow flexible sizing */
+        th {
+            width: auto !important; /* Override any potential fixed widths */
+        }
+        /* Ensure table cells also adjust */
+        td {
+            width: auto !important;
+        }
+
+        /* Custom style for Quantity column */
+        .quantity-column {
+            background-color: #e0f2fe; /* Light blue-100 for distinction */
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-400 to-purple-600 min-h-screen flex items-center justify-center p-4">
@@ -69,15 +84,15 @@
 
         <!-- Service Items Table -->
         <div class="overflow-x-auto mb-6">
-            <table class="w-full border-collapse table-fixed text-sm">
+            <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr class="bg-gray-100">
-                        <th class="border border-gray-300 p-2 w-20 rounded-tl-lg">編號</th>
-                        <th class="border border-gray-300 p-2 w-48">照顧組合</th>
-                        <th class="border border-gray-300 p-2 w-24">全額 (元)</th>
-                        <th class="border border-gray-300 p-2 w-20">組數</th>
-                        <th class="border border-gray-300 p-2 w-28">項目總額 (元)</th>
-                        <th class="border border-gray-300 p-2 w-28 rounded-tr-lg">項目自付額 (元)</th>
+                        <th class="border border-gray-300 p-2 rounded-tl-lg">編號</th>
+                        <th class="border border-gray-300 p-2">照顧組合</th>
+                        <th class="border border-gray-300 p-2">全額 (元)</th>
+                        <th class="border border-gray-300 p-2 quantity-column">組數</th>
+                        <th class="border border-gray-300 p-2">項目總額 (元)</th>
+                        <th class="border border-gray-300 p-2 rounded-tr-lg">項目自付額 (元)</th>
                     </tr>
                 </thead>
                 <tbody id="serviceItemsTableBody">
@@ -108,10 +123,7 @@
         <!-- Action Buttons -->
         <div class="flex flex-wrap justify-center gap-4 mt-6">
             <button id="saveBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-green-300">
-                儲存計算 (雲端)
-            </button>
-            <button id="loadBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-indigo-300">
-                載入上次計算 (雲端)
+                重新計算
             </button>
             <button id="resetQuantitiesBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gray-300">
                 歸零組數
@@ -164,8 +176,7 @@
         const subsidyComparisonBox = document.getElementById('subsidyComparisonBox');
         const subsidyComparisonResultDisplay = document.getElementById('subsidyComparisonResult');
         const resetQuantitiesBtn = document.getElementById('resetQuantitiesBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        const loadBtn = document.getElementById('loadBtn'); // Re-added load button DOM element
+        const saveBtn = document.getElementById('saveBtn'); // Now "重新計算" button
         const userIdDisplay = document.getElementById('userIdDisplay');
         const exportDataTextarea = document.getElementById('exportDataTextarea');
         const exportDataBtn = document.getElementById('exportDataBtn');
@@ -178,14 +189,14 @@
         const cmsSubsidies = {
             '2': 10020, '3': 15460, '4': 18580, '5': 24100,
             '6': 28070, '7': 32090, '8': 36180,
-            '自費': 0 // Added '自費' with 0 subsidy
+            '自費': 0
         };
 
         const identitySelfPaymentRates = {
             '一般戶': 0.16,
             '中低收入戶': 0.05,
             '低收入戶': 0,
-            '自費': 1 // Added '自費' with 100% self-payment
+            '自費': 1
         };
 
         const serviceItems = [
@@ -245,8 +256,8 @@
                     <td class="border border-gray-300 p-2 text-center font-medium">${item.code}</td>
                     <td class="border border-gray-300 p-2 text-left">${item.name}</td>
                     <td class="border border-gray-300 p-2 text-right">${item.fullCost.toLocaleString()}</td>
-                    <td class="border border-gray-300 p-0">
-                        <input type="number" data-code="${item.code}" class="quantity-input w-full h-10 p-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0">
+                    <td class="border border-gray-300 p-2 text-center quantity-column">
+                        <input type="number" data-code="${item.code}" class="quantity-input w-full h-10 p-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
                     </td>
                     <td class="border border-gray-300 p-2 text-right font-semibold" id="itemTotal-${item.code}">0</td>
                     <td class="border border-gray-300 p-2 text-right font-semibold" id="itemSelfPayment-${item.code}">0</td>
@@ -341,6 +352,8 @@
             identityTypeSelect.value = '一般戶';
             calculateAllTotals();
             showMessage('所有組數和選項已歸零！', 'info');
+            // Scroll to the top of the page
+            window.scroll({ top: 0, left: 0, behavior: 'smooth' });
         }
 
         // Helper function to apply loaded data to the UI and internal model
@@ -367,9 +380,9 @@
             const identityType = identityTypeSelect.value;
 
             if (cmsLevel) {
-                outputText += `CMS ${cmsLevel} 等級\n`; // Changed '級' to '等級'
+                outputText += `CMS ${cmsLevel} 等級\n`;
             } else {
-                outputText += `CMS 等級: 未選擇\n`; // Changed '級' to '等級'
+                outputText += `CMS 等級: 未選擇\n`;
             }
             outputText += `${identityType}\n`;
 
@@ -398,67 +411,21 @@
             showMessage('數據已複製到剪貼簿！', 'success');
         }
 
-        // Function to save current calculation to Firestore
-        async function saveCalculation() {
-            if (!userId || userId === 'anonymous') {
-                showMessage('請先登入或等待使用者 ID 載入。', 'error');
-                return;
-            }
-
-            const dataToSave = {
-                cmsLevel: cmsLevelSelect.value,
-                identityType: identityTypeSelect.value,
-                serviceQuantities: serviceQuantities,
-                timestamp: new Date() // Add a timestamp
-            };
-
-            try {
-                const docRef = doc(db, `artifacts/${appIdFromEnv}/users/${userId}/calculator_data`, 'current_calculation');
-                await setDoc(docRef, dataToSave);
-                showMessage('計算結果已成功儲存到雲端！', 'success');
-            } catch (error) {
-                console.error("Error saving document: ", error);
-                showMessage('儲存失敗：' + error.message, 'error');
-            }
-        }
-
-        // Function to load last calculation from Firestore
-        async function loadCalculation() {
-            if (!userId || userId === 'anonymous') {
-                showMessage('請先登入或等待使用者 ID 載入。', 'error');
-                return;
-            }
-
-            try {
-                const docRef = doc(db, `artifacts/${appIdFromEnv}/users/${userId}/calculator_data`, 'current_calculation');
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const loadedData = docSnap.data();
-                    applyLoadedData(loadedData);
-                    showMessage('上次計算結果已成功載入！', 'success');
-                } else {
-                    showMessage('沒有找到上次儲存的計算結果。', 'info');
-                }
-            } catch (error) {
-                console.error("Error loading document: ", error);
-                showMessage('載入失敗：' + error.message, 'error');
-            }
-        }
+        // Removed saveCalculation function
+        // Removed loadCalculation function
 
         // Firebase Initialization and Data Operations
         async function initializeFirebaseAndLoadData() {
             try {
                 app = initializeApp(firebaseConfigFromEnv);
-                db = getFirestore(app);
-                auth = getAuth(app);
+                db = getFirestore(app); // db is still initialized but not used by buttons
+                auth = getAuth(app); // auth is still initialized for userId
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         userIdDisplay.textContent = `使用者 ID: ${userId}`;
                         console.log("Firebase authenticated. User ID:", userId);
-                        // Removed automatic loadCalculation here as per user request
                     } else {
                         if (initialAuthTokenFromEnv) {
                             await signInWithCustomToken(auth, initialAuthTokenFromEnv);
@@ -478,8 +445,7 @@
             cmsLevelSelect.addEventListener('change', calculateAllTotals);
             identityTypeSelect.addEventListener('change', calculateAllTotals);
             resetQuantitiesBtn.addEventListener('click', resetQuantities);
-            saveBtn.addEventListener('click', () => saveCalculation());
-            loadBtn.addEventListener('click', () => loadCalculation()); // Re-added event listener for load button
+            saveBtn.addEventListener('click', () => resetQuantities()); // "重新計算" button now calls resetQuantities()
             exportDataBtn.addEventListener('click', () => exportCurrentData());
             copyDataBtn.addEventListener('click', () => copyExportedData());
 
