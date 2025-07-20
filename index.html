@@ -22,6 +22,12 @@
         input[type="number"] {
             -moz-appearance: textfield; /* Keep for Firefox compatibility if needed, but modern browsers usually handle it */
         }
+        /* Hide spinner arrows for all number inputs */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
         /* Adjustments for responsive table columns */
         /* Removed specific overrides for th and td width */
@@ -38,6 +44,47 @@
             line-height: normal; /* Ensure line height doesn't add extra space */
             font-size: 0.85em; /* Slightly smaller font for the number itself */
             min-width: 0; /* Allow it to shrink as much as possible */
+        }
+
+        /* Modal specific styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -105,14 +152,40 @@
             </table>
         </div>
 
+        <!-- Other Services Section -->
+        <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50 text-left">
+            <label class="block text-lg font-semibold text-gray-700 mb-2">是否使用其他服務?</label>
+            <div class="flex items-center space-x-4 mb-3">
+                <input type="radio" id="otherServicesYes" name="otherServicesOption" value="yes" class="form-radio text-blue-600 h-5 w-5">
+                <label for="otherServicesYes" class="text-gray-700">是</label>
+                <input type="radio" id="otherServicesNo" name="otherServicesOption" value="no" class="form-radio text-blue-600 h-5 w-5" checked>
+                <label for="otherServicesNo" class="text-gray-700">否</label>
+            </div>
+
+            <div id="otherServicesInputContainer" class="hidden mb-3">
+                <label for="otherServicesManualInput" class="block text-md font-semibold text-gray-700 mb-2">手動輸入已知使用服務費用(元)或點選選擇其他服務項目計算:</label>
+                <input type="number" id="otherServicesManualInput" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800" value="0" min="0">
+            </div>
+
+            <button id="openOtherServicesModalBtn" class="hidden bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                選擇其他服務項目 (日照、家托、專業服務等)
+            </button>
+
+            <!-- New: Remaining Subsidy Display -->
+            <div id="remainingSubsidyDisplayContainer" class="hidden mt-3 bg-blue-50 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg text-left">
+                <p class="font-bold">已使用其他服務項目，目前可使用居服額度:</p>
+                <p id="remainingSubsidyForMainServices" class="text-2xl font-semibold mt-1">0 元</p>
+            </div>
+        </div>
+
         <!-- Summary Totals -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-left">
             <div class="bg-purple-100 border border-purple-400 text-purple-700 px-4 py-3 rounded-lg">
-                <p class="font-bold">全額總計:</p>
+                <p class="font-bold">居服全額總計:</p> <!-- Changed text -->
                 <p id="totalFullCost" class="text-2xl font-semibold mt-1">0 元</p>
             </div>
             <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg">
-                <p class="font-bold">自付額總計:</p>
+                <p class="font-bold">居服自付額總計:</p> <!-- Changed text -->
                 <p id="totalSelfPayment" class="text-2xl font-semibold mt-1">0 元</p>
             </div>
         </div>
@@ -161,6 +234,38 @@
         </div>
     </div>
 
+    <!-- Other Services Modal -->
+    <div id="otherServicesModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="closeOtherServicesModalBtn">&times;</span>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">選擇其他服務項目</h2>
+            <div class="overflow-x-auto mb-4">
+                <table class="w-full border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-gray-300 p-0 rounded-tl-lg whitespace-normal">編號</th>
+                            <th class="border border-gray-300 p-1 whitespace-normal">照顧組合</th>
+                            <th class="border border-gray-300 p-1">全額 (元)</th>
+                            <th class="border border-gray-300 p-1 quantity-column">組數</th>
+                            <th class="border border-gray-300 p-1">項目總額 (元)</th>
+                            <th class="border border-gray-300 p-1 rounded-tr-lg">項目自付額 (元)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="otherServiceItemsTableBody">
+                        <!-- Other service items will be dynamically inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-right mt-4">
+                <p class="font-bold text-lg">其他服務項目總計 (全額): <span id="modalOtherServicesTotalFullCost">0</span> 元</p>
+                <p class="font-bold text-lg">其他服務項目總計 (自付額): <span id="modalOtherServicesTotalSelfPayment">0</span> 元</p>
+            </div>
+            <button id="confirmOtherServicesBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-green-300 mt-4">
+                確認選擇並關閉
+            </button>
+        </div>
+    </div>
+
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -172,8 +277,8 @@
         const identityTypeSelect = document.getElementById('identityType');
         const subsidyAmountDisplay = document.getElementById('subsidyAmount');
         const serviceItemsTableBody = document.getElementById('serviceItemsTableBody');
-        const totalFullCostDisplay = document.getElementById('totalFullCost');
-        const totalSelfPaymentDisplay = document.getElementById('totalSelfPayment');
+        const totalFullCostDisplay = document.getElementById('totalFullCost'); // Now "居服全額總計"
+        const totalSelfPaymentDisplay = document.getElementById('totalSelfPayment'); // Now "居服自付額總計"
         const subsidyComparisonBox = document.getElementById('subsidyComparisonBox');
         const subsidyComparisonResultDisplay = document.getElementById('subsidyComparisonResult');
         const saveBtn = document.getElementById('saveBtn'); // Now "重新計算" button
@@ -181,6 +286,22 @@
         const exportDataTextarea = document.getElementById('exportDataTextarea');
         const exportDataBtn = document.getElementById('exportDataBtn');
         const copyDataBtn = document.getElementById('copyDataBtn');
+
+        const otherServicesYesRadio = document.getElementById('otherServicesYes');
+        const otherServicesNoRadio = document.getElementById('otherServicesNo');
+        const otherServicesInputContainer = document.getElementById('otherServicesInputContainer');
+        const otherServicesManualInput = document.getElementById('otherServicesManualInput');
+        const openOtherServicesModalBtn = document.getElementById('openOtherServicesModalBtn');
+        const remainingSubsidyDisplayContainer = document.getElementById('remainingSubsidyDisplayContainer');
+        const remainingSubsidyForMainServicesElement = document.getElementById('remainingSubsidyForMainServices');
+
+
+        const otherServicesModal = document.getElementById('otherServicesModal');
+        const closeOtherServicesModalBtn = document.getElementById('closeOtherServicesModalBtn');
+        const otherServiceItemsTableBody = document.getElementById('otherServiceItemsTableBody');
+        const modalOtherServicesTotalFullCost = document.getElementById('modalOtherServicesTotalFullCost');
+        const modalOtherServicesTotalSelfPayment = document.getElementById('modalOtherServicesTotalSelfPayment');
+        const confirmOtherServicesBtn = document.getElementById('confirmOtherServicesBtn');
 
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
@@ -207,9 +328,9 @@
             { code: 'BA11', name: '肢體關節活動', fullCost: 195 }, { code: 'BA12', name: '協助上下樓', fullCost: 130 },
             { code: 'BA13', name: '陪同外出', fullCost: 195 }, { code: 'BA14', name: '陪同就醫', fullCost: 685 },
             { code: 'BA15', name: '家務協助', fullCost: 195 },
-            { code: 'BA15(共用)', name: '家務協助 (共用)', fullCost: 195 }, // Added new item
+            { code: 'BA15-2', name: '家務協助 (共用)', fullCost: 195 }, // Renamed
             { code: 'BA16', name: '代購代領', fullCost: 130 },
-            { code: 'BA16(共用)', name: '代購代領 (共用)', fullCost: 130 }, // Added new item
+            { code: 'BA16-2', name: '代購代領 (共用)', fullCost: 130 }, // Renamed
             { code: 'BA17a', name: '人工氣道管內分泌物抽吸', fullCost: 75 }, { code: 'BA17b', name: '口腔分泌物抽吸', fullCost: 65 },
             { code: 'BA17c', name: '管路清潔', fullCost: 50 }, { code: 'BA17d1', name: '血糖機驗血糖', fullCost: 50 },
             { code: 'BA17d2', name: '甘油球通便', fullCost: 50 }, { code: 'BA17e', name: '分藥入藥盒', fullCost: 50 },
@@ -218,8 +339,46 @@
             { code: 'BA24', name: '協助排泄', fullCost: 220 }
         ];
 
-        // Store current quantities for each service item
+        const otherServiceItems = [
+            // BB Series
+            { code: 'BB01', name: '日間照顧 (全日) -- 第1型(2級-14天)', fullCost: 675 },
+            { code: 'BB03', name: '日間照顧 (全日) -- 第2型(3級-18天)', fullCost: 840 },
+            { code: 'BB05', name: '日間照顧 (全日) -- 第3型(4級-20天)', fullCost: 920 },
+            { code: 'BB07', name: '日間照顧 (全日) -- 第4型(5級-23天)', fullCost: 1045 },
+            { code: 'BB09', name: '日間照顧 (全日) -- 第5型(6級-24天)', fullCost: 1130 },
+            { code: 'BB11', name: '日間照顧 (全日) -- 第6型(7級-26天)', fullCost: 1210 },
+            { code: 'BB13', name: '日間照顧 (全日) -- 第7型(8級-28天)', fullCost: 1285 },
+            // BD Series
+            { code: 'BD01', name: '社區式協助沐浴', fullCost: 200 },
+            { code: 'BD02', name: '社區式晚餐', fullCost: 150 },
+            { code: 'BD03', name: '社區式服務交通接送(10公里內)', fullCost: 100 },
+            // BC Series
+            { code: 'BC01', name: '家庭托顧 (全日) -- 第1型(2級-16天)', fullCost: 625 },
+            { code: 'BC03', name: '家庭托顧 (全日) -- 第2型(3級-20天)', fullCost: 760 },
+            { code: 'BC05', name: '家庭托顧 (全日) -- 第3型(4級-23天)', fullCost: 785 },
+            { code: 'BC07', name: '家庭托顧 (全日) -- 第4型(5級-27天)', fullCost: 880 },
+            { code: 'BC09', name: '家庭托顧 (全日) -- 第5型(6級-29天)', fullCost: 960 },
+            { code: 'BC11', name: '家庭托顧 (全日) -- 第6型(7級-32天)', fullCost: 980 },
+            { code: 'BC13', name: '家庭托顧 (全日) -- 第7型(8級-34天)', fullCost: 1040 },
+            // CA Series
+            { code: 'CA07', name: 'IADLs、ADLs 復能照護(3次)', fullCost: 4500 },
+            { code: 'CA08', name: '個別化服務計畫 (ISP) 擬定與執行(4次)', fullCost: 6000 },
+            // CB Series
+            { code: 'CB01', name: '營養照護(4次)', fullCost: 4000 },
+            { code: 'CB02', name: '進食與吞嚥照護(6次)', fullCost: 9000 },
+            { code: 'CB03', name: '困擾行為照護(3次)', fullCost: 4500 },
+            { code: 'CB04', name: '臥床或長期活動受限照護(6次)', fullCost: 9000 },
+            // CD Series (assuming CD02 is from CD series based on image)
+            { code: 'CD02', name: '居家護理指導與諮詢(4次)', fullCost: 6000 },
+            // CC Series
+            { code: 'CC01', name: '居家環境安全或無障礙空間規劃', fullCost: 2000 }
+        ];
+
+
+        // Store current quantities for each service item (main table)
         const serviceQuantities = {};
+        // Store current quantities for other service items (modal table)
+        const otherServiceQuantities = {};
 
         // Firebase variables
         let app;
@@ -246,13 +405,10 @@
             }, 3000);
         }
 
-        // Function to render service items table
-        function renderServiceItems() {
-            console.log("Rendering service items...");
-            console.log("serviceItemsTableBody element:", serviceItemsTableBody);
-            serviceItemsTableBody.innerHTML = '';
-            console.log("Table body cleared.");
-            serviceItems.forEach(item => {
+        // Function to render service items table (main table)
+        function renderServiceItems(targetTableBody, items, quantitiesMap) {
+            targetTableBody.innerHTML = '';
+            items.forEach(item => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
@@ -260,95 +416,151 @@
                     <td class="border border-gray-300 p-1 text-left whitespace-normal">${item.name}</td>
                     <td class="border border-gray-300 p-1 text-right">${item.fullCost.toLocaleString()}</td>
                     <td class="border border-gray-300 text-center quantity-column">
-                        <input type="number" data-code="${item.code}" class="quantity-input w-full h-auto text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
+                        <input type="number" data-code="${item.code}" class="quantity-input w-full h-auto text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${quantitiesMap[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
                     </td>
                     <td class="border border-gray-300 p-1 text-right font-semibold" id="itemTotal-${item.code}">0</td>
                     <td class="border border-gray-300 p-1 text-right font-semibold" id="itemSelfPayment-${item.code}">0</td>
                 `;
-                serviceItemsTableBody.appendChild(row);
-                console.log(`Appended row for item: ${item.code}`);
-                if (serviceQuantities[item.code] === undefined) {
-                    serviceQuantities[item.code] = 0;
+                targetTableBody.appendChild(row);
+                if (quantitiesMap[item.code] === undefined) {
+                    quantitiesMap[item.code] = 0;
                 }
             });
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.addEventListener('input', handleQuantityChange);
+            targetTableBody.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('input', (event) => {
+                    const code = event.target.dataset.code;
+                    let quantity = parseInt(event.target.value);
+                    if (isNaN(quantity) || quantity < 0) {
+                        quantity = 0;
+                        event.target.value = 0;
+                    }
+                    quantitiesMap[code] = quantity;
+                    // If this is the main table, recalculate all totals
+                    if (targetTableBody === serviceItemsTableBody) {
+                        calculateAllTotals();
+                    } else { // If this is the modal table, only update modal totals
+                        calculateModalOtherServicesTotals();
+                    }
+                });
             });
-            calculateAllTotals();
-            console.log("Service items rendered successfully.");
-        }
-
-        // Handle quantity input change
-        function handleQuantityChange(event) {
-            const code = event.target.dataset.code;
-            let quantity = parseInt(event.target.value);
-            if (isNaN(quantity) || quantity < 0) {
-                quantity = 0;
-                event.target.value = 0;
+            // Initial calculation for the rendered table
+            if (targetTableBody === serviceItemsTableBody) {
+                calculateAllTotals();
+            } else {
+                calculateModalOtherServicesTotals();
             }
-            serviceQuantities[code] = quantity;
-            calculateAllTotals();
         }
 
-        // Main calculation function
+        // Calculate and update totals for the main table
         function calculateAllTotals() {
             let currentCmsLevel = cmsLevelSelect.value;
             let currentIdentityType = identityTypeSelect.value;
             let currentSubsidy = cmsSubsidies[currentCmsLevel] || 0;
             let selfPaymentRate = identitySelfPaymentRates[currentIdentityType] || 0;
 
-            let totalFullCost = 0;
-            let totalSelfPayment = 0;
+            let mainServicesFullCost = 0; // For "居服全額總計"
+            let mainServicesSelfPayment = 0; // For "居服自付額總計"
 
+            // Calculate for main service items (BA series)
             serviceItems.forEach(item => {
                 const quantity = serviceQuantities[item.code] || 0;
                 const itemFullTotal = item.fullCost * quantity;
                 let itemSelfPayment;
 
-                // Special calculation for BA15(共用) and BA16(共用)
-                if (item.code === 'BA15(共用)' || item.code === 'BA16(共用)') {
+                // Special calculation for BA15-2 and BA16-2
+                if (item.code === 'BA15-2' || item.code === 'BA16-2') {
                     if (currentIdentityType === '自費') {
-                        itemSelfPayment = itemFullTotal; // '自費' always pays full cost
+                        itemSelfPayment = itemFullTotal;
                     } else {
-                        // Corrected Formula:
-                        // 1. (原金額 ÷ 2) = 中間結果 (無條件捨去)
                         const intermediateResult = Math.floor(itemFullTotal / 2);
-                        // 2. 中間結果 × 身份別 = X
                         const X = intermediateResult * selfPaymentRate;
-                        // 3. 中間結果 + X = 答案
                         itemSelfPayment = Math.floor(intermediateResult + X);
                     }
                 } else {
-                    // Original calculation for other items
                     itemSelfPayment = (currentIdentityType === '自費') ? itemFullTotal : Math.floor(itemFullTotal * selfPaymentRate);
                 }
 
-                totalFullCost += itemFullTotal;
-                totalSelfPayment += itemSelfPayment;
+                mainServicesFullCost += itemFullTotal;
+                mainServicesSelfPayment += itemSelfPayment;
 
                 document.getElementById(`itemTotal-${item.code}`).textContent = itemFullTotal.toLocaleString();
                 document.getElementById(`itemSelfPayment-${item.code}`).textContent = itemSelfPayment.toLocaleString();
             });
 
-            subsidyAmountDisplay.textContent = `${currentSubsidy.toLocaleString()} 元`;
-            totalFullCostDisplay.textContent = `${totalFullCost.toLocaleString()} 元`;
-            totalSelfPaymentDisplay.textContent = `${Math.floor(totalSelfPayment).toLocaleString()} 元`;
+            // Calculate other services cost (full cost)
+            let otherServicesFullCost = 0;
 
-            // Corrected logic: Subsidy comparison is CMS Subsidy - Total Full Cost
-            updateSubsidyComparison(currentSubsidy, totalFullCost);
+            if (otherServicesYesRadio.checked) {
+                const manualInputVal = parseFloat(otherServicesManualInput.value);
+                if (!isNaN(manualInputVal) && manualInputVal > 0) {
+                    otherServicesFullCost = manualInputVal;
+                } else {
+                    otherServiceItems.forEach(item => {
+                        const quantity = otherServiceQuantities[item.code] || 0;
+                        const itemFullTotal = item.fullCost * quantity;
+                        otherServicesFullCost += itemFullTotal;
+                    });
+                }
+            }
+
+            // Update main display totals (only BA series)
+            totalFullCostDisplay.textContent = `${mainServicesFullCost.toLocaleString()} 元`;
+            totalSelfPaymentDisplay.textContent = `${Math.floor(mainServicesSelfPayment).toLocaleString()} 元`;
+
+            // Calculate and display remaining subsidy for main services
+            const remainingForMainServices = currentSubsidy - otherServicesFullCost;
+            remainingSubsidyForMainServicesElement.textContent = `${Math.floor(remainingForMainServices).toLocaleString()} 元`;
+
+            // Update CMS subsidy display (this remains the same)
+            subsidyAmountDisplay.textContent = `${currentSubsidy.toLocaleString()} 元`;
+
+            // The subsidy comparison should now compare CMS subsidy with the *total* full cost from ALL services
+            const overallTotalFullCostForComparison = mainServicesFullCost + otherServicesFullCost;
+            updateSubsidyComparison(currentSubsidy, overallTotalFullCostForComparison);
         }
 
+        // Calculate and update totals for the modal table
+        function calculateModalOtherServicesTotals() {
+            let currentIdentityType = identityTypeSelect.value;
+            let selfPaymentRate = identitySelfPaymentRates[currentIdentityType] || 0;
+
+            let modalTotalFullCost = 0;
+            let modalTotalSelfPayment = 0;
+
+            otherServiceItems.forEach(item => {
+                const quantity = otherServiceQuantities[item.code] || 0;
+                const itemFullTotal = item.fullCost * quantity;
+                let itemSelfPayment;
+
+                // Other services (BB, BD, BC, CA, CB, CC) use the same calculation as BA items (general rule)
+                itemSelfPayment = (currentIdentityType === '自費') ? itemFullTotal : Math.floor(itemFullTotal * selfPaymentRate);
+
+                modalTotalFullCost += itemFullTotal;
+                modalTotalSelfPayment += itemSelfPayment;
+
+                const itemTotalElement = otherServicesModal.querySelector(`#itemTotal-${item.code}`);
+                const itemSelfPaymentElement = otherServicesModal.querySelector(`#itemSelfPayment-${item.code}`);
+
+                if (itemTotalElement) itemTotalElement.textContent = itemFullTotal.toLocaleString();
+                if (itemSelfPaymentElement) itemSelfPaymentElement.textContent = itemSelfPayment.toLocaleString();
+            });
+
+            modalOtherServicesTotalFullCost.textContent = modalTotalFullCost.toLocaleString();
+            modalOtherServicesTotalSelfPayment.textContent = Math.floor(modalTotalSelfPayment).toLocaleString();
+        }
+
+
         // Update subsidy comparison result
-        function updateSubsidyComparison(subsidy, fullCost) { // Renamed parameter for clarity
-            const remaining = Math.floor(subsidy - fullCost); // Corrected calculation
-            if (subsidy === 0 && cmsLevelSelect.value !== '自費') { // If subsidy is 0 but not '自費' CMS level
+        function updateSubsidyComparison(subsidy, fullCost) {
+            const remaining = Math.floor(subsidy - fullCost);
+            if (subsidy === 0 && cmsLevelSelect.value !== '自費') {
                 subsidyComparisonResultDisplay.textContent = '請選擇 CMS 等級以比對補助。';
-                subsidyComparisonBox.classList.remove('bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700');
+                subsidyComparisonBox.classList.remove('bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700', 'bg-gray-100', 'border-gray-400', 'text-gray-700');
                 subsidyComparisonBox.classList.add('bg-blue-100', 'border-blue-400', 'text-blue-700');
-            } else if (cmsLevelSelect.value === '自費') { // Special handling for '自費' CMS level
+            } else if (cmsLevelSelect.value === '自費') {
                 subsidyComparisonResultDisplay.textContent = '自費項目無補助比對。';
-                subsidyComparisonBox.classList.remove('bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700');
-                subsidyComparisonBox.classList.add('bg-gray-100', 'border-gray-400', 'text-gray-700'); // Neutral color for self-pay
+                subsidyComparisonBox.classList.remove('bg-green-100', 'bg-red-100', 'border-green-400', 'border-red-400', 'text-green-700', 'text-red-700', 'bg-blue-100', 'border-blue-400', 'text-blue-700');
+                subsidyComparisonBox.classList.add('bg-gray-100', 'border-gray-400', 'text-gray-700');
             }
             else if (remaining >= 0) {
                 subsidyComparisonResultDisplay.textContent = `補助有剩餘：${remaining.toLocaleString()} 元`;
@@ -366,14 +578,19 @@
             for (const code in serviceQuantities) {
                 serviceQuantities[code] = 0;
             }
+            for (const code in otherServiceQuantities) {
+                otherServiceQuantities[code] = 0;
+            }
             document.querySelectorAll('.quantity-input').forEach(input => {
                 input.value = 0;
             });
             cmsLevelSelect.value = '';
             identityTypeSelect.value = '一般戶';
+            otherServicesNoRadio.checked = true; // Reset other services to "No"
+            toggleOtherServicesInput(); // Hide other services input/modal button
+            otherServicesManualInput.value = 0; // Reset manual input
             calculateAllTotals();
             showMessage('所有組數和選項已歸零！', 'info');
-            // Scroll to the top of the page
             window.scroll({ top: 0, left: 0, behavior: 'smooth' });
         }
 
@@ -387,10 +604,32 @@
             }
             Object.assign(serviceQuantities, data.serviceQuantities || {});
 
+            for (const key in otherServiceQuantities) {
+                delete otherServiceQuantities[key];
+            }
+            Object.assign(otherServiceQuantities, data.otherServiceQuantities || {});
+
+
             document.querySelectorAll('.quantity-input').forEach(input => {
                 const code = input.dataset.code;
-                input.value = serviceQuantities[code] !== undefined ? serviceQuantities[code] : 0;
+                if (serviceQuantities[code] !== undefined) {
+                    input.value = serviceQuantities[code];
+                } else if (otherServiceQuantities[code] !== undefined) {
+                    input.value = otherServiceQuantities[code];
+                } else {
+                    input.value = 0;
+                }
             });
+
+            // Restore other services state
+            if (data.otherServicesEnabled) {
+                otherServicesYesRadio.checked = true;
+                otherServicesManualInput.value = data.otherServicesManualValue || 0;
+            } else {
+                otherServicesNoRadio.checked = true;
+            }
+            toggleOtherServicesInput(); // Update UI based on restored state
+
             calculateAllTotals();
         }
 
@@ -400,22 +639,58 @@
             const cmsLevel = cmsLevelSelect.value;
             const identityType = identityTypeSelect.value;
 
-            if (cmsLevel) {
-                outputText += `CMS ${cmsLevel} 等級\n`;
-            } else {
-                outputText += `CMS 等級: 未選擇\n`;
-            }
-            outputText += `${identityType}\n`;
+            outputText += `CMS 等級: ${cmsLevel || '未選擇'}\n`;
+            outputText += `身分別: ${identityType}\n\n`;
 
-            const serviceItemsMap = new Map(serviceItems.map(item => [item.code, item.name]));
-
+            outputText += "主要服務項目 (居服):\n"; // Updated text
+            const mainServiceItemsMap = new Map(serviceItems.map(item => [item.code, item.name]));
+            let hasMainServices = false;
             for (const code in serviceQuantities) {
                 const quantity = serviceQuantities[code];
                 if (quantity > 0) {
-                    const name = serviceItemsMap.get(code) || code;
-                    outputText += `${code}：${quantity}組\n`;
+                    hasMainServices = true;
+                    const name = mainServiceItemsMap.get(code) || code;
+                    outputText += `${code} (${name})：${quantity}組\n`;
                 }
             }
+            if (!hasMainServices) {
+                outputText += "無\n";
+            }
+            outputText += "\n";
+
+            outputText += "其他服務:\n";
+            if (otherServicesYesRadio.checked) {
+                const manualInputVal = parseFloat(otherServicesManualInput.value);
+                if (!isNaN(manualInputVal) && manualInputVal > 0) {
+                    outputText += `手動輸入費用: ${manualInputVal.toLocaleString()} 元\n`;
+                } else {
+                    const otherServiceItemsMap = new Map(otherServiceItems.map(item => [item.code, item.name]));
+                    let hasOtherServices = false;
+                    for (const code in otherServiceQuantities) {
+                        const quantity = otherServiceQuantities[code];
+                        if (quantity > 0) {
+                            hasOtherServices = true;
+                            const name = otherServiceItemsMap.get(code) || code;
+                            outputText += `${code} (${name})：${quantity}組\n`;
+                        }
+                    }
+                    if (!hasOtherServices) {
+                        outputText += "無 (已選擇使用其他服務，但未選擇具體項目)\n";
+                    }
+                }
+            } else {
+                outputText += "否 (未使用其他服務)\n";
+            }
+            outputText += "\n";
+
+            // Add the new remaining subsidy info to export
+            outputText += `已使用其他服務項目，目前可使用居服額度: ${remainingSubsidyForMainServicesElement.textContent}\n\n`;
+
+            outputText += `居服全額總計: ${totalFullCostDisplay.textContent}\n`; // Updated text
+            outputText += `居服自付額總計: ${totalSelfPaymentDisplay.textContent}\n`; // Updated text
+            outputText += `補助比對結果: ${subsidyComparisonResultDisplay.textContent}\n`;
+
+
             exportDataTextarea.value = outputText.trim();
             showMessage('數據已匯出，請複製上方文字！', 'info');
         }
@@ -436,8 +711,8 @@
         async function initializeFirebaseAndLoadData() {
             try {
                 app = initializeApp(firebaseConfigFromEnv);
-                db = getFirestore(app); // db is still initialized but not used by buttons
-                auth = getAuth(app); // auth is still initialized for userId
+                db = getFirestore(app);
+                auth = getAuth(app);
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
@@ -458,22 +733,62 @@
             }
         }
 
+        // Toggle visibility of other services input/modal button and new remaining subsidy display
+        function toggleOtherServicesInput() {
+            if (otherServicesYesRadio.checked) {
+                otherServicesInputContainer.classList.remove('hidden');
+                openOtherServicesModalBtn.classList.remove('hidden');
+                otherServicesManualInput.value = 0; // Reset manual input when modal option is available
+                remainingSubsidyDisplayContainer.classList.remove('hidden'); // Show new display
+            } else {
+                otherServicesInputContainer.classList.add('hidden');
+                openOtherServicesModalBtn.classList.add('hidden');
+                // Clear all other service quantities when "No" is selected
+                for (const code in otherServiceQuantities) {
+                    otherServiceQuantities[code] = 0;
+                }
+                otherServicesManualInput.value = 0; // Ensure manual input is reset when "No" is selected
+                remainingSubsidyDisplayContainer.classList.add('hidden'); // Hide new display
+            }
+            calculateAllTotals(); // Recalculate totals after changing other services option
+        }
+
         // Event Listeners for dropdowns and buttons
         document.addEventListener('DOMContentLoaded', () => {
             cmsLevelSelect.addEventListener('change', calculateAllTotals);
             identityTypeSelect.addEventListener('change', calculateAllTotals);
-            saveBtn.addEventListener('click', () => resetQuantities()); // "重新計算" button now calls resetQuantities()
+            saveBtn.addEventListener('click', () => resetQuantities());
             exportDataBtn.addEventListener('click', () => exportCurrentData());
             copyDataBtn.addEventListener('click', () => copyExportedData());
 
+            otherServicesYesRadio.addEventListener('change', toggleOtherServicesInput);
+            otherServicesNoRadio.addEventListener('change', toggleOtherServicesInput);
+            otherServicesManualInput.addEventListener('input', calculateAllTotals);
+
+            openOtherServicesModalBtn.addEventListener('click', () => {
+                otherServicesModal.classList.remove('hidden');
+                renderServiceItems(otherServiceItemsTableBody, otherServiceItems, otherServiceQuantities);
+            });
+
+            closeOtherServicesModalBtn.addEventListener('click', () => {
+                otherServicesModal.classList.add('hidden');
+                calculateAllTotals(); // Recalculate main totals after closing modal
+            });
+
+            confirmOtherServicesBtn.addEventListener('click', () => {
+                otherServicesModal.classList.add('hidden');
+                otherServicesManualInput.value = 0; // Clear manual input if modal is used
+                calculateAllTotals(); // Recalculate main totals after confirming modal selection
+            });
+
             try {
-                renderServiceItems(); // Call render function
+                renderServiceItems(serviceItemsTableBody, serviceItems, serviceQuantities); // Render main service items
             } catch (e) {
                 console.error("Error rendering service items:", e);
                 showMessage('表格內容載入失敗：' + e.message, 'error');
             }
 
-            initializeFirebaseAndLoadData(); // Initialize Firebase
+            initializeFirebaseAndLoadData();
         });
     </script>
 </body>
