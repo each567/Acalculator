@@ -24,18 +24,20 @@
         }
 
         /* Adjustments for responsive table columns */
-        /* Remove fixed width from table header cells to allow flexible sizing */
-        th {
-            width: auto !important; /* Override any potential fixed widths */
-        }
-        /* Ensure table cells also adjust */
-        td {
-            width: auto !important;
-        }
+        /* Removed specific overrides for th and td width */
 
         /* Custom style for Quantity column */
         .quantity-column {
             background-color: #e0f2fe; /* Light blue-100 for distinction */
+            padding: 0; /* Remove padding from the TD itself */
+        }
+        .quantity-column input {
+            text-align: center; /* Ensure input text is centered */
+            padding: 1px; /* Minimal padding inside the input */
+            height: auto; /* Let height adjust */
+            line-height: normal; /* Ensure line height doesn't add extra space */
+            font-size: 0.85em; /* Slightly smaller font for the number itself */
+            min-width: 0; /* Allow it to shrink as much as possible */
         }
     </style>
 </head>
@@ -73,7 +75,7 @@
                     <option value="一般戶">一般戶 (自付額 16%)</option>
                     <option value="中低收入戶">中低收入戶 (自付額 5%)</option>
                     <option value="低收入戶">低收入戶 (自付額 0%)</option>
-                    <option value="自費">自費 (自付額 100%)</option>
+                    <option value="自費">自付額 (100%)</option>
                 </select>
             </div>
         </div>
@@ -89,7 +91,7 @@
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr class="bg-gray-100">
-                        <th class="border border-gray-300 p-1 rounded-tl-lg">編號</th>
+                        <th class="border border-gray-300 p-0 rounded-tl-lg whitespace-normal">編號</th>
                         <th class="border border-gray-300 p-1 whitespace-normal">照顧組合</th>
                         <th class="border border-gray-300 p-1">全額 (元)</th>
                         <th class="border border-gray-300 p-1 quantity-column">組數</th>
@@ -204,7 +206,10 @@
             { code: 'BA08', name: '足部照護', fullCost: 500 }, { code: 'BA10', name: '翻身拍背', fullCost: 155 },
             { code: 'BA11', name: '肢體關節活動', fullCost: 195 }, { code: 'BA12', name: '協助上下樓', fullCost: 130 },
             { code: 'BA13', name: '陪同外出', fullCost: 195 }, { code: 'BA14', name: '陪同就醫', fullCost: 685 },
-            { code: 'BA15', name: '家務協助', fullCost: 195 }, { code: 'BA16', name: '代購代領', fullCost: 130 },
+            { code: 'BA15', name: '家務協助', fullCost: 195 },
+            { code: 'BA15(共用)', name: '家務協助 (共用)', fullCost: 195 }, // Added new item
+            { code: 'BA16', name: '代購代領', fullCost: 130 },
+            { code: 'BA16(共用)', name: '代購代領 (共用)', fullCost: 130 }, // Added new item
             { code: 'BA17a', name: '人工氣道管內分泌物抽吸', fullCost: 75 }, { code: 'BA17b', name: '口腔分泌物抽吸', fullCost: 65 },
             { code: 'BA17c', name: '管路清潔', fullCost: 50 }, { code: 'BA17d1', name: '血糖機驗血糖', fullCost: 50 },
             { code: 'BA17d2', name: '甘油球通便', fullCost: 50 }, { code: 'BA17e', name: '分藥入藥盒', fullCost: 50 },
@@ -251,11 +256,11 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
-                    <td class="border border-gray-300 p-1 text-center font-medium">${item.code}</td>
+                    <td class="border border-gray-300 p-0 text-center font-medium whitespace-normal">${item.code}</td>
                     <td class="border border-gray-300 p-1 text-left whitespace-normal">${item.name}</td>
                     <td class="border border-gray-300 p-1 text-right">${item.fullCost.toLocaleString()}</td>
-                    <td class="border border-gray-300 p-1 text-center quantity-column">
-                        <input type="number" data-code="${item.code}" class="quantity-input w-full h-10 p-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
+                    <td class="border border-gray-300 text-center quantity-column">
+                        <input type="number" data-code="${item.code}" class="quantity-input w-full h-auto text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg" value="${serviceQuantities[item.code] || 0}" min="0" onfocus="if(this.value == '0') this.value = '';">
                     </td>
                     <td class="border border-gray-300 p-1 text-right font-semibold" id="itemTotal-${item.code}">0</td>
                     <td class="border border-gray-300 p-1 text-right font-semibold" id="itemSelfPayment-${item.code}">0</td>
@@ -298,8 +303,25 @@
             serviceItems.forEach(item => {
                 const quantity = serviceQuantities[item.code] || 0;
                 const itemFullTotal = item.fullCost * quantity;
-                // If identityType is '自費', selfPayment should be full cost (100%)
-                const itemSelfPayment = (currentIdentityType === '自費') ? itemFullTotal : Math.floor(itemFullTotal * selfPaymentRate);
+                let itemSelfPayment;
+
+                // Special calculation for BA15(共用) and BA16(共用)
+                if (item.code === 'BA15(共用)' || item.code === 'BA16(共用)') {
+                    if (currentIdentityType === '自費') {
+                        itemSelfPayment = itemFullTotal; // '自費' always pays full cost
+                    } else {
+                        // Corrected Formula:
+                        // 1. (原金額 ÷ 2) = 中間結果 (無條件捨去)
+                        const intermediateResult = Math.floor(itemFullTotal / 2);
+                        // 2. 中間結果 × 身份別 = X
+                        const X = intermediateResult * selfPaymentRate;
+                        // 3. 中間結果 + X = 答案
+                        itemSelfPayment = Math.floor(intermediateResult + X);
+                    }
+                } else {
+                    // Original calculation for other items
+                    itemSelfPayment = (currentIdentityType === '自費') ? itemFullTotal : Math.floor(itemFullTotal * selfPaymentRate);
+                }
 
                 totalFullCost += itemFullTotal;
                 totalSelfPayment += itemSelfPayment;
